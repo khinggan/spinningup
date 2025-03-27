@@ -32,7 +32,7 @@ class VPGBuffer:
         Append one timestep of agent-environment interaction to the buffer.
         """
         assert self.ptr < self.max_size     # buffer has to have room so you can store
-        self.obs_buf[self.ptr] = obs
+        self.obs_buf[self.ptr] = obs[0]
         self.act_buf[self.ptr] = act
         self.rew_buf[self.ptr] = rew
         self.val_buf[self.ptr] = val
@@ -271,9 +271,9 @@ def vpg(env_fn, actor_critic=core.MLPActorCritic, ac_kwargs=dict(),  seed=0,
     # Main loop: collect experience in env and update/log each epoch
     for epoch in range(epochs):
         for t in range(local_steps_per_epoch):
-            a, v, logp = ac.step(torch.as_tensor(o, dtype=torch.float32))
+            a, v, logp = ac.step(torch.as_tensor(o[0], dtype=torch.float32))
 
-            next_o, r, d, _ = env.step(a)
+            next_o, ter, tun, r, d = env.step(a)
             ep_ret += r
             ep_len += 1
 
@@ -328,7 +328,7 @@ def vpg(env_fn, actor_critic=core.MLPActorCritic, ac_kwargs=dict(),  seed=0,
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('--env', type=str, default='HalfCheetah-v2')
+    parser.add_argument('--env', type=str, default='HalfCheetah-v4')
     parser.add_argument('--hid', type=int, default=64)
     parser.add_argument('--l', type=int, default=2)
     parser.add_argument('--gamma', type=float, default=0.99)
@@ -339,7 +339,7 @@ if __name__ == '__main__':
     parser.add_argument('--exp_name', type=str, default='vpg')
     args = parser.parse_args()
 
-    mpi_fork(args.cpu)  # run parallel code with mpi
+    # mpi_fork(args.cpu)  # run parallel code with mpi
 
     from spinup.utils.run_utils import setup_logger_kwargs
     logger_kwargs = setup_logger_kwargs(args.exp_name, args.seed)
